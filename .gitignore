@@ -129,4 +129,5 @@ dmypy.json
 Footer
 
 # pycharm
-/.idea/*
+/.idea
+!main.py

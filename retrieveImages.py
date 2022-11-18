@@ -48,17 +48,24 @@ while True:
     textArr = text_features.detach().numpy()[0]
     bestIndices = findBestPictures(5, textArr)
 
-    shellCommand = ""
+    ids = []
 
     for i in bestIndices:
-        id = indexArr[int(i)]
+        ids.append(indexArr[int(i)])
+    print(ids)
+
+
+    ########## SHELL COMMAND STUFF ################
+    shellCommand = ""
+
+    for id in ids:
         shellCommand += picturesPath + id + " "
     
     #shell open file command
     commandToOpenFile = "open"
     shellCommand = commandToOpenFile + " " + shellCommand
     os.system(shellCommand)
-    
+    ###############################################
 
 
 

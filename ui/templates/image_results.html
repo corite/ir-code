@@ -1,0 +1,64 @@
+<style>
+    .results-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .overlay-container {
+        position: relative;
+        flex-shrink: 1;
+        display: flex;
+    }
+    
+    .overlay-image {
+        display: block;
+    }
+    
+    .overlay {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        opacity: 0;
+        transition: .2s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        padding: 5px;
+    }
+    
+    .overlay-panel {
+        background-color: #212121;
+        border-radius: 5px;
+        padding: 5px;
+        overflow: auto;
+    }
+    
+    .overlay-item {
+        display: flex;
+    }
+    
+    .overlay-container{{ ':hover' if hide else '' }} .overlay {
+        opacity: 1;
+    }
+</style>
+
+<div class="results-container">
+    {% for image in images %}
+        <div class="overlay-container">
+            <img class="overlay-image" src="{{ image | encode }}" />
+            <div class="overlay">
+                <div class="overlay-panel" >
+                    <div class="overlay-item">
+                        Id: {{ image.id }} ({{ image.name }})
+                    </div>
+                    <div class="overlay-item">
+                        {{ image.url() | domain }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>

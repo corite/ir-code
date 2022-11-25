@@ -23,4 +23,5 @@ class ClipImageIndex:
                 inputs = processor(images=np.array(image), return_tensors="pt")
                 image_features = model.get_image_features(**inputs)
                 features = image_features.numpy()[0]
+                features = features / np.linalg.norm(features)
                 self.index[image.id] = features

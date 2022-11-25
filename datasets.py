@@ -2,6 +2,7 @@ import os
 from os.path import join
 from torch.utils.data import Dataset
 import imageio.v3 as iio
+from functools import cached_property
 
 class ToucheImageDataset(Dataset):
     
@@ -32,14 +33,12 @@ class Image:
         self.id = img_id
         self.name = img_name
         self.img_dir = img_dir
-        self.img_url = None
         self.image = None
         
+    @cached_property
     def url(self):
-        if not self.img_url:
-            with open(join(self.img_dir, 'image-url.txt'), 'r') as f:
-                self.img_url = f.read()
-        return self.img_url
+        with open(join(self.img_dir, 'image-url.txt'), 'r') as f:
+            return f.read()
     
     def __array__(self, dtype=None):
         if not self.image:

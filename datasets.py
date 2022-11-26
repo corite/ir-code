@@ -2,7 +2,31 @@ import os
 from os.path import join
 from torch.utils.data import Dataset
 import imageio.v3 as iio
+from bs4 import BeautifulSoup
 from functools import cached_property
+from dataclasses import dataclass
+
+@dataclass
+class Topic:
+    number: int
+    title: str
+    description: str
+    narrative: str
+
+class ToucheTopics(dict):
+    
+    def __init__(self, topics_file):
+        with open(topics_file, 'r') as f:
+            soup = BeautifulSoup(f.read(), 'xml')
+            for topic in soup.find_all('topic'):
+                num = int(topic.number.text)
+                self[num] = Topic(
+                    number=num,
+                    title=topic.title.text.strip(),
+                    description=topic.description.text.strip(),
+                    narrative=topic.narrative.text.strip()
+                )
+            
 
 class ToucheImageDataset(Dataset):
     
@@ -39,6 +63,14 @@ class Image:
     def url(self):
         with open(join(self.img_dir, 'image-url.txt'), 'r') as f:
             return f.read()
+        
+    @cached_property
+    def page(self):
+        page_dir = next(filter(lambda f: f.is_dir(), os.scandir(join(self.img_dir, 'pages'))))
+        return Page(page_dir)
+    
+    def find_occurences_in_page(self):
+        return self.page.snapshot.find_all('img', src=self.url)
     
     def __array__(self, dtype=None):
         if not self.image:
@@ -47,3 +79,18 @@ class Image:
     
     def __repr__(self):
         return f'<Image {self.id}: {self.name}>'
+    
+class Page:
+    
+    def __init__(self, page_dir):
+        self.page_dir = page_dir
+        
+    @cached_property
+    def url(self):
+        with open(join(self.page_dir, 'page-url.txt'), 'r') as f:
+            return f.read()
+        
+    @cached_property
+    def snapshot(self):
+        with open(join(self.page_dir, 'snapshot', 'dom.html'), 'r') as f:
+            return BeautifulSoup(f.read(), 'html.parser')

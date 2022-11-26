@@ -55,7 +55,7 @@
                         Id: {{ image.id }} ({{ image.name }})
                     </div>
                     <div class="overlay-item">
-                        {{ image.url | domain }}
+                        <a href="{{ image.page.url }}" target="_blank">{{ image.url | domain }}</a>
                     </div>
                 </div>
             </div>

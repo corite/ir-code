@@ -2,9 +2,13 @@ import os
 from os.path import join
 from torch.utils.data import Dataset
 import imageio.v3 as iio
+import numpy as np
 from bs4 import BeautifulSoup
 from functools import cached_property
 from dataclasses import dataclass
+import logging
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class Topic:
@@ -74,7 +78,12 @@ class Image:
     
     def __array__(self, dtype=None):
         if not self.image:
-             self.image = iio.imread(join(self.img_dir, 'image.webp'))[:,:,:3]
+            try:
+                self.image = iio.imread(join(self.img_dir, 'image.webp'))[:,:,:3]
+            except:
+                # transformers image_utils thinks dim < 4 are color channels and switches them around
+                self.image = np.zeros((5, 5, 3), dtype=np.uint8)
+                logger.warn(f'Could not read image in {self.img_dir}, using black image instead')
         return self.image
     
     def __repr__(self):

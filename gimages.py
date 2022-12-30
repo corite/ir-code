@@ -8,7 +8,9 @@ from dataclasses import dataclass
 @dataclass
 class SearchImage:
     image_url: str
+    thumbnail_url: str
     page_url: str
+    rank: int
 
 class GoogleImageSearch:
     
@@ -29,8 +31,11 @@ class GoogleImageSearch:
         'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:106.0) Gecko/20100101 Firefox/106.0'
     }
     
-    def __init__(self):
-        self.req = requests.Session()
+    def __init__(self, session=None):
+        if not session:
+            self.req = requests.Session()
+        else:
+            self.req = session
         self.fresh_sc()
         
     def fresh_sc(self):
@@ -47,7 +52,7 @@ class GoogleImageSearch:
         
         def get_url(result):
             arguments = result['clickUrl'].split('?')[1]
-            return urllib.parse.parse_qs(arguments)['piurl']
+            return urllib.parse.parse_qs(arguments)['piurl'][0]
         
         def results_from_page(page):
             data = {
@@ -65,7 +70,7 @@ class GoogleImageSearch:
 
             results = extract_json(soup)
             for result in results:
-                yield SearchImage(image_url=get_url(result), page_url=result['displayUrl'])
+                yield SearchImage(image_url=get_url(result), page_url=result['displayUrl'], thumbnail_url=result['thumbnailUrl'], rank=result['sourceIndex'] + len(results)*(page-1))
                 
         for page in range(1, pages + 1):
             yield from results_from_page(page)

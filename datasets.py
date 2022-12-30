@@ -103,3 +103,8 @@ class Page:
     def snapshot(self):
         with open(join(self.page_dir, 'snapshot', 'dom.html'), 'r') as f:
             return BeautifulSoup(f.read(), 'html.parser')
+        
+    @cached_property
+    def snapshot_cleaned(self):
+        with open(join(self.page_dir, 'snapshot', 'text.txt'), 'r') as f:
+            return f.read()

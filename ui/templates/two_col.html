@@ -1,0 +1,18 @@
+{% from 'macros.html' import images %}
+
+{% include 'styles.html' %}
+
+<div class="even-columns">
+    <div class="col col-container">
+        <span class="col-title">PRO</span>
+        <div class="results-container">
+            {{ images(pro) }}
+        </div>
+    </div>
+    <div class="col col-container">
+        <span class="col-title">CON</span>
+        <div class="results-container">
+            {{ images(con) }}
+        </div>
+    </div>
+</div>

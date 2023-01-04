@@ -1,0 +1,20 @@
+{% macro images(imgs) -%}
+    {% for image in imgs %}
+        <div class="overlay-container">
+            <img class="overlay-image" src="{{ image | encode }}" />
+            {% if image.is_double %}
+            <div class="image-mark">DOUBLE</div>
+            {% endif %}
+            <div class="overlay">
+                <div class="overlay-panel" >
+                    <div class="overlay-item">
+                        Id: {{ image.id }} ({{ image.name }})
+                    </div>
+                    <div class="overlay-item">
+                        <a href="{{ image.page.url }}" target="_blank">{{ image.url | domain }}</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+{%- endmacro %}

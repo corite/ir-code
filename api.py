@@ -52,6 +52,19 @@ class Summetix:
                 is_pro=arg['stanceLabel'] == 'pro'))
         return ArgumentList(arguments)
     
+class CachedChatGPT:
+    
+    @staticmethod
+    def by_topic(topic_id):
+        res = requests.get('https://api.neville.yuustan.space/api/v1.0/images/arguments', params={'topic_id': topic_id})
+        res_json = res.json()
+        arguments = []
+        for arg in res_json['arguments']:
+            arguments.append(Argument(
+                text=arg['text'],
+                is_pro=arg['is_pro']))
+        return ArgumentList(arguments)
+    
 @dataclass
 class Argument:
     text: str

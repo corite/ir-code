@@ -4,13 +4,13 @@
 
 <div class="even-columns">
     <div class="col col-container">
-        <span class="col-title">PRO</span>
+        <span class="col-title">{{ labels[0].upper() }}</span>
         <div class="results-container">
             {{ images(pro) }}
         </div>
     </div>
     <div class="col col-container">
-        <span class="col-title">CON</span>
+        <span class="col-title">{{ labels[1].upper() }}</span>
         <div class="results-container">
             {{ images(con) }}
         </div>

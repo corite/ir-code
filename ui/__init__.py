@@ -8,12 +8,17 @@ from urllib.parse import urlparse
 
 jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(os.path.dirname(__file__) + '/templates/'))
 
-def encode_image(image_array):
-    img = Image.fromarray(np.array(image_array))
+def reencode_image(image):
+    ''' slower but supports images not stored as webp on disk '''
+    img = Image.fromarray(np.array(image))
     img.thumbnail((1000, 250))
     bytes_image = BytesIO()
     img.save(bytes_image, format='webp', quality=80, method=0)
     img_encoded = base64.b64encode(bytes_image.getvalue()).decode()
+    return 'data:image/WEBP;base64,' + img_encoded
+
+def encode_image(image):
+    img_encoded = base64.b64encode(image.binary()).decode()
     return 'data:image/WEBP;base64,' + img_encoded
 
 def get_domain(url):

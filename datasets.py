@@ -49,6 +49,7 @@ class ToucheImageDataset(Dataset):
         return len(self.image_ids)
     
     def __getitem__(self, idx):
+        idx = int(idx)
         if isinstance(idx, slice):
             return [self[i] for i in range(*idx.indices(len(self)))]
         else:
@@ -76,6 +77,10 @@ class Image:
     def find_occurences_in_page(self):
         return self.page.snapshot.find_all('img', src=self.url)
     
+    def binary(self):
+        with open(join(self.img_dir, 'image.webp'), 'rb') as f:
+            return f.read()
+    
     def __array__(self, dtype=None):
         if not self.image:
             try:
@@ -88,6 +93,12 @@ class Image:
     
     def __repr__(self):
         return f'<Image {self.id}: {self.name}>'
+    
+    def __hash__(self):
+        return self.id
+    
+    def __eq__(self, other):
+        return hash(self) == hash(other)
     
 class Page:
     
@@ -102,7 +113,10 @@ class Page:
     @cached_property
     def snapshot(self):
         with open(join(self.page_dir, 'snapshot', 'dom.html'), 'r') as f:
-            return BeautifulSoup(f.read(), 'html.parser')
+            return f.read()
+        
+    def snapshot_parse(self):
+        return BeautifulSoup(self.snapshot, 'html.parser')
         
     @cached_property
     def snapshot_cleaned(self):

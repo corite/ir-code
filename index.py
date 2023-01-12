@@ -38,11 +38,23 @@ class ClipImageSearch:
         self.model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
         self.tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-base-patch32")
         
-    def query(self, query, results=50):
+    def text2vec(self, text):
         with torch.no_grad():
-            inputs = self.tokenizer([query], padding=True, return_tensors="pt")
+            inputs = self.tokenizer([text], padding=True, return_tensors="pt")
             text_features = self.model.get_text_features(**inputs)
             t_features = text_features.numpy()
-            t_features = t_features / np.linalg.norm(t_features)
-            dist, ind = self.tree.query(t_features, k=results)
-            return [self.images[i] for i in ind[0]]
+            return t_features / np.linalg.norm(t_features)
+        
+    def query(self, query, results=50):
+        dist, ind = self.tree.query(self.text2vec(query), k=results)
+        res = [self.images[i] for i in ind[0]]
+        for image, dist in zip(res, dist[0]):
+            image.dist = dist
+        return res
+    
+    def query_avg(self, queries, results=50):
+        dist, ind = self.tree.query(np.mean([self.text2vec(q) for q in queries], axis=0), k=results)
+        res = [self.images[i] for i in ind[0]]
+        for image, dist in zip(res, dist[0]):
+            image.dist = dist
+        return res

@@ -62,7 +62,6 @@ class Image:
         self.id = img_id
         self.name = img_name
         self.img_dir = img_dir
-        self.image = None
         
     @cached_property
     def url(self):
@@ -82,14 +81,13 @@ class Image:
             return f.read()
     
     def __array__(self, dtype=None):
-        if not self.image:
-            try:
-                self.image = iio.imread(join(self.img_dir, 'image.webp'))[:,:,:3]
-            except:
-                # transformers image_utils thinks dim < 4 are color channels and switches them around
-                self.image = np.zeros((5, 5, 3), dtype=np.uint8)
-                logger.warn(f'Could not read image in {self.img_dir}, using black image instead')
-        return self.image
+        try:
+            image = iio.imread(join(self.img_dir, 'image.webp'))[:,:,:3]
+        except:
+            # transformers image_utils thinks dim < 4 are color channels and switches them around
+            image = np.zeros((5, 5, 3), dtype=np.uint8)
+            logger.warn(f'Could not read image in {self.img_dir}, using black image instead')
+        return image
     
     def __repr__(self):
         return f'<Image {self.id}: {self.name}>'

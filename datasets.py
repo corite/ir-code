@@ -49,10 +49,12 @@ class ToucheImageDataset(Dataset):
         return len(self.image_ids)
     
     def __getitem__(self, idx):
-        idx = int(idx)
-        if isinstance(idx, slice):
+        if isinstance(idx, str):
+            return self[self.image_ids.index(idx)]
+        elif isinstance(idx, slice):
             return [self[i] for i in range(*idx.indices(len(self)))]
         else:
+            idx = int(idx)
             image_id = self.image_ids[idx]
             return Image(idx, image_id, join(self.root_dir, image_id[:3], image_id))
     

@@ -6,17 +6,19 @@ on:
 jobs:
   deploy_tira:
     runs-on: ubuntu-latest
-  steps:
-    - name: Login to TIRA registry
-      uses: docker/login-action@v2
-      with:
-        registry: registry.webis.de
-        username: ${{ secrets.TIRA_REGISTRY_USER }}
-        password: ${{ secrets.TIRA_REGISTRY_USER }}
-    - name: Build and push baseline
-      uses: docker/build-push-action@v3
-      with:
-        context: .
-        file: ./runs/baseline/Dockerfile
-        push: true
-        tags: registry.webis.de/code-research/tira/tira-user-touche23-neville-longbottom/baseline:latest
+    steps:
+      - name: Set up Git repository
+        uses: actions/checkout@v3
+      - name: Login to TIRA registry
+        uses: docker/login-action@v2
+        with:
+          registry: registry.webis.de
+          username: ${{ secrets.TIRA_REGISTRY_USER }}
+          password: ${{ secrets.TIRA_REGISTRY_USER }}
+      - name: Build and push baseline
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./runs/baseline/Dockerfile
+          push: true
+          tags: registry.webis.de/code-research/tira/tira-user-touche23-neville-longbottom/baseline:latest

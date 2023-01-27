@@ -7,9 +7,38 @@ from bs4 import BeautifulSoup
 from functools import cached_property
 from dataclasses import dataclass
 import logging
+import pandas as pd
+from pyterrier.datasets import Dataset as PTDataset
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
+class ToucheDataset(PTDataset):
+    
+    def __init__(self, topics_file, corpus_dir, qrels_file):
+        self.images = ToucheImageDataset(corpus_dir)
+        self.topics = ToucheTopics(topics_file)
+        self.qrels_file = qrels_file
+        
+    def get_topics(self):
+        return self.topics.to_pandas()
+    
+    def get_qrels(self):
+        qrels_touche = pd.read_csv(self.qrels_file, sep='\s+', names=['qid', 'label', 'docno', 'valid'])
+        return qrels_touche[qrels_touche['valid'] == 1 & ((qrels_touche['label'] == 'PRO') | (qrels_touche['label'] == 'CON'))].drop(columns=['valid'])
+    
+    def get_corpus_iter(self, verbose=True):
+        iterator = ({
+            'docno': image.id,
+            'image_name': image.name,
+            'text': image.page.snapshot_cleaned
+        } for image in self.images)
+        
+        if verbose:
+            return tqdm(iterator, total=len(self.images))
+        else:
+            return iterator
+        
 @dataclass
 class Topic:
     number: int
@@ -30,7 +59,9 @@ class ToucheTopics(dict):
                     description=topic.description.text.strip(),
                     narrative=topic.narrative.text.strip()
                 )
-            
+    def to_pandas(self):
+        records = map(lambda t: {'qid': t.number, 'query': t.title}, self.values())
+        return pd.DataFrame.from_records(records)
 
 class ToucheImageDataset(Dataset):
     

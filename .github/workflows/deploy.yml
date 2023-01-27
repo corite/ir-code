@@ -1,0 +1,22 @@
+name: TIRA deployment 
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+  steps:
+      -
+        name: Login to TIRA registry
+        uses: docker/login-action@v2
+        with:
+          registry: registry.webis.de
+          username: ${{ secrets.TIRA_REGISTRY_USER }}
+          password: ${{ secrets.TIRA_REGISTRY_USER }}
+      -
+        name: Build and push baseline
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./runs/baseline/Dockerfile
+          push: true
+          tags: registry.webis.de/code-research/tira/tira-user-touche23-neville-longbottom/baseline:latest

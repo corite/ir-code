@@ -1,0 +1,7 @@
+version: "3.8"
+services:
+  baseline:
+    image: registry.webis.de/code-research/tira/tira-user-touche23-neville-longbottom/baseline:latest
+    build:
+      context: .
+      dockerfile: ./runs/baseline/Dockerfile

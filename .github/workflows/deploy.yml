@@ -1,9 +1,11 @@
 name: TIRA deployment 
-
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
+jobs:
+  deploy_tira:
+    runs-on: ubuntu-latest
   steps:
       -
         name: Login to TIRA registry

@@ -7,15 +7,13 @@ jobs:
   deploy_tira:
     runs-on: ubuntu-latest
   steps:
-      -
-        name: Login to TIRA registry
+      - name: Login to TIRA registry
         uses: docker/login-action@v2
         with:
           registry: registry.webis.de
           username: ${{ secrets.TIRA_REGISTRY_USER }}
           password: ${{ secrets.TIRA_REGISTRY_USER }}
-      -
-        name: Build and push baseline
+      - name: Build and push baseline
         uses: docker/build-push-action@v3
         with:
           context: .

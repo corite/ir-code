@@ -2,8 +2,17 @@
 
 ## Docker Submissions
 
-To create a new docker submission, first create a new subdirectory in `runs` and create a Dockerfile and a python script (p.e. `main.py`). For reference you can use the `baseline` folder. Next you have to add a service for your run in the `docker-compose.yml` inside this root directory. You can copy the baseline service but you have to change the image name and build dockerfile path. 
+To create a new docker submission, first create a new subdirectory in `runs` and create a Dockerfile and a python script (p.e. `main.py`). For reference you can use the `baseline` folder. Next you have to add a build&push task in the `.github/workflows/deploy.yml` like this, substituting run with your run name:
 
-To build all containers, run `docker compose build`.
+```yaml
+      - name: Build and push [run]
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          file: ./runs/[run]/Dockerfile
+          push: true
+          tags: registry.webis.de/code-research/tira/tira-user-touche23-neville-longbottom/[run]:latest
+```
 
-To push all images to the tira remote, run `docker compose push`.
+Push your changes to the github repo and the new container will be built and deployed after your changes hae been merged into the main branch.
+

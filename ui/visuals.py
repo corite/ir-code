@@ -4,6 +4,9 @@ from neville.ui import render_template
 def image_results(image_results, hide=True):
     return display(HTML(render_template('image_results.html', image_results=image_results, hide=hide)))
 
+def pt_results(images, pt_results):
+    return image_results([images[image_id] for image_id in pt_results['docno']])
+
 def pro_con(pro, con, hide=True, doubles=False):
     return two_col(pro, con, hide=hide, doubles=doubles)
 

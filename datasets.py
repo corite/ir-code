@@ -23,14 +23,17 @@ class ToucheDataset(PTDataset):
     def get_topics(self):
         return self.topics.to_pandas()
     
-    def get_qrels(self):
-        qrels_touche = pd.read_csv(self.qrels_file, sep='\s+', names=['qid', 'label', 'docno', 'valid'])
-        return qrels_touche[qrels_touche['valid'] == 1 & ((qrels_touche['label'] == 'PRO') | (qrels_touche['label'] == 'CON'))].drop(columns=['valid'])
-    
+    def get_qrels(self, variant):
+        variant = variant.upper()
+        if variant not in ['PRO', 'CON']:
+            raise Exception('Please specify if PRO or CON documents should be labeled relevant by passing the respective variant argument')
+        qrels_touche = pd.read_csv(self.qrels_file, sep='\s+', names=['qid', 'stance', 'docno', 'label'], dtype={'qid': str, 'label': int})
+        return qrels_touche[qrels_touche['stance'] == variant].drop(columns=['stance'])
+
     def get_corpus_iter(self, verbose=True):
         iterator = ({
-            'docno': image.id,
-            'image_name': image.name,
+            'docno': image.name,
+            'image_id': image.id,
             'text': image.page.snapshot_cleaned
         } for image in self.images)
         
@@ -61,7 +64,7 @@ class ToucheTopics(dict):
                 )
     def to_pandas(self):
         records = map(lambda t: {'qid': t.number, 'query': t.title}, self.values())
-        return pd.DataFrame.from_records(records)
+        return pd.DataFrame(records, dtype=str)
 
 class ToucheImageDataset(Dataset):
     
@@ -99,7 +102,7 @@ class Image:
     @cached_property
     def url(self):
         with open(join(self.img_dir, 'image-url.txt'), 'r') as f:
-            return f.read()
+            return f.read().rstrip()
         
     @cached_property
     def page(self):
@@ -136,12 +139,17 @@ class Page:
     def __init__(self, page_dir):
         self.page_dir = page_dir
         
-    @cached_property
+    @property
     def url(self):
         with open(join(self.page_dir, 'page-url.txt'), 'r') as f:
-            return f.read()
+            return f.read().rstrip()
         
-    @cached_property
+    @property
+    def xpath(self):
+        with open(join(self.page_dir, 'snapshot', 'image-xpath.txt'), 'r') as f:
+            return list(map(lambda x: x.rstrip(), f.readlines()))
+        
+    @property
     def snapshot(self):
         with open(join(self.page_dir, 'snapshot', 'dom.html'), 'r') as f:
             return f.read()
@@ -149,7 +157,7 @@ class Page:
     def snapshot_parse(self):
         return BeautifulSoup(self.snapshot, 'html.parser')
         
-    @cached_property
+    @property
     def snapshot_cleaned(self):
         with open(join(self.page_dir, 'snapshot', 'text.txt'), 'r') as f:
             return f.read()

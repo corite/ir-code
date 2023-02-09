@@ -28,8 +28,10 @@ def to_sentences(text):
                 
 def extract_page_content(snapshot):      
     article = article_extractor.get_doc(snapshot)
-    yield from to_sentences(article.title.split('|')[0])
-    yield from to_sentences(article.content)
+    if article.title:
+        yield from to_sentences(article.title.split('|')[0])
+    if article.content:
+        yield from to_sentences(article.content)
     
 def extract_starting_at_tags(tags):
     processed = set()

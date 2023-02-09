@@ -3,6 +3,8 @@ import torch
 from tqdm import tqdm
 from transformers import CLIPProcessor, CLIPModel, CLIPTokenizer
 from sklearn.neighbors import BallTree
+from pyterrier import Transformer
+import pandas as pd
 
 class ClipImageIndex:
     
@@ -58,3 +60,19 @@ class ClipImageSearch:
         for image, dist in zip(res, dist[0]):
             image.dist = dist
         return res
+    
+class ClipRetrieve(Transformer):
+    
+    def __init__(self, clip_index, images, num_results):
+        self.clip_search = ClipImageSearch(images, clip_index)
+        self.num_results = num_results
+        
+    def transform(self, queries):
+        retrieval_results = []
+        for qid, query in zip(queries['qid'], queries['query']):
+            img_res = self.clip_search.query(query, results=self.num_results)
+            retrieval_results += [(qid, image.name, image.dist) for image in img_res]
+        
+        results = pd.DataFrame(retrieval_results, columns=['qid', 'docno', 'score'])
+        results['rank'] = results.sort_values(by='score').groupby('qid').cumcount()
+        return pd.merge(queries, results, on='qid')

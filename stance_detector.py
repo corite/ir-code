@@ -1,4 +1,5 @@
 from functools import partial
+import pandas as pd
 
 class StanceDetector():
     
@@ -9,13 +10,14 @@ class StanceDetector():
         self.images = images
         self.content_extractor = content_extractor
         
-    def score(self, query: str, sentences: (str)) -> float:
+    def score(self, query_docno_sentences: ((str, str, str))) -> float:
         return 0
     
-    def _rerank(self, doc_row):
-        image = self.images[doc_row['docno']]
-        content = self.content_extractor(image)
-        return self.score(doc_row['query'], content)
+    def _rerank(self, doc_rows):
+        query_sentences = ((query, image_id, sentence) for query, image_id in zip(doc_rows['query'], doc_rows['docno']) for sentence in self.content_extractor(self.images[image_id]))
+        result = pd.merge(doc_rows.drop(columns=['score']), self.score(query_sentences), on=['query', 'docno'], how='left')
+        # set documents with no content, therefore not in the left join (NaN), to score 0
+        return result['score'].fillna(0)
     
     def rerank(self):
         return partial(StanceDetector._rerank, self)

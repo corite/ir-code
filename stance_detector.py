@@ -17,6 +17,9 @@ class StanceDetector():
         query_sentences = ((query, image_id, sentence) for query, image_id in zip(doc_rows['query'], doc_rows['docno']) for sentence in self.content_extractor(self.images[image_id]))
         result = pd.merge(doc_rows.drop(columns=['score']), self.score(query_sentences), on=['query', 'docno'], how='left')
         # set documents with no content, therefore not in the left join (NaN), to score 0
+        print('results:')
+        print(result)
+        print(result.fillna(0))
         return result['score'].fillna(0)
     
     def rerank(self):

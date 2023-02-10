@@ -75,4 +75,8 @@ class ClipRetrieve(Transformer):
         
         results = pd.DataFrame(retrieval_results, columns=['qid', 'docno', 'score'])
         results['rank'] = results.sort_values(by='score').groupby('qid').cumcount()
-        return pd.merge(queries, results, on='qid')
+        print('clip:')
+        print(results)
+        res = pd.merge(queries, results, on='qid')
+        print(res)
+        return res

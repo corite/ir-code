@@ -19,6 +19,6 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: ./runs/baseline/Dockerfile
+          file: ./runs/run0/Dockerfile
           push: true
-          tags: registry.webis.de/code-research/tira/tira-user-touche23-neville-longbottom/baseline:latest
+          tags: registry.webis.de/code-research/tira/tira-user-touche23-neville-longbottom/run0:latest

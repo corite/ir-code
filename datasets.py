@@ -10,12 +10,13 @@ import logging
 import pandas as pd
 from pyterrier.datasets import Dataset as PTDataset
 from tqdm import tqdm
+import json
 
 logger = logging.getLogger(__name__)
 
 class ToucheDataset(PTDataset):
     
-    def __init__(self, topics_file, corpus_dir, qrels_file):
+    def __init__(self, topics_file, corpus_dir, qrels_file=None):
         self.images = ToucheImageDataset(corpus_dir)
         self.topics = ToucheTopics(topics_file)
         self.qrels_file = qrels_file
@@ -24,6 +25,8 @@ class ToucheDataset(PTDataset):
         return self.topics.to_pandas()
     
     def get_qrels(self, variant):
+        if not self.qrels_file:
+            raise Exception('No qrels passed in constructor')
         variant = variant.upper()
         if variant not in ['PRO', 'CON']:
             raise Exception('Please specify if PRO or CON documents should be labeled relevant by passing the respective variant argument')
@@ -52,16 +55,30 @@ class Topic:
 class ToucheTopics(dict):
     
     def __init__(self, topics_file):
-        with open(topics_file, 'r') as f:
-            soup = BeautifulSoup(f.read(), 'xml')
-            for topic in soup.find_all('topic'):
-                num = int(topic.number.text)
-                self[num] = Topic(
-                    number=num,
-                    title=topic.title.text.strip(),
-                    description=topic.description.text.strip(),
-                    narrative=topic.narrative.text.strip()
-                )
+        if topics_file.endswith('.jsonl'):
+            with open(topics_file, 'r') as f:
+                for line in f:
+                    query_json = json.loads(line)
+                    num = int(query_json['qid'])
+                    self[num] = Topic(
+                        number=num,
+                        title=query_json['query'],
+                        description=None,
+                        narrative=None)
+        elif topics_file.endswith('.xml'):
+            with open(topics_file, 'r') as f:
+                soup = BeautifulSoup(f.read(), 'xml')
+                for topic in soup.find_all('topic'):
+                    num = int(topic.number.text)
+                    self[num] = Topic(
+                        number=num,
+                        title=topic.title.text.strip(),
+                        description=topic.description.text.strip(),
+                        narrative=topic.narrative.text.strip()
+                    )
+        else:
+            raise Exception('Unsupported file type, extension is neither .jsonl nor .xml')
+        
     def to_pandas(self):
         records = map(lambda t: {'qid': t.number, 'query': t.title}, self.values())
         return pd.DataFrame(records, dtype=str)

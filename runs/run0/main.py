@@ -4,11 +4,11 @@ import pyterrier as pt
 from tira_utils import get_input_directory_and_output_directory, normalize_run
 from pathlib import Path
 
-from neville.datasets import ToucheDataset
-from neville.ui.visuals import pt_results
-from neville.index import ClipImageIndex, ClipRetrieve
-from neville.debater_stance import DebaterStanceDetector
-from neville.text_extractor import extract_content
+from datasets import ToucheDataset
+from ui.visuals import pt_results
+from index import ClipImageIndex, ClipRetrieve
+from debater_stance import DebaterStanceDetector
+from text_extractor import extract_content
 
 # execute in tira with: 
 # DEBATER_TOKEN=<the-token> TIRA_INPUT_DIRECTORY=$inputDataset TIRA_OUTPUT_DIRECTORY=$outputDir /workspace/main.py 

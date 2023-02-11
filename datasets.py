@@ -11,6 +11,7 @@ import pandas as pd
 from pyterrier.datasets import Dataset as PTDataset
 from tqdm import tqdm
 import json
+from neville.text_extractor import extract_content
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,18 @@ class ToucheDataset(PTDataset):
             'docno': image.name,
             'image_id': image.id,
             'text': image.page.snapshot_cleaned
+        } for image in self.images)
+        
+        if verbose:
+            return tqdm(iterator, total=len(self.images))
+        else:
+            return iterator
+        
+    def get_image_text_iter(self, verbose=True):
+        iterator = ({
+            'docno': image.name,
+            'image_id': image.id,
+            'text': ' '.join(extract_content(image))
         } for image in self.images)
         
         if verbose:
@@ -80,8 +93,8 @@ class ToucheTopics(dict):
             raise Exception('Unsupported file type, extension is neither .jsonl nor .xml')
         
     def to_pandas(self):
-        records = map(lambda t: {'qid': t.number, 'query': t.title}, self.values())
-        return pd.DataFrame(records, dtype=str)
+        records = map(lambda t: {'id': t.number, 'qid': str(t.number), 'query': t.title}, self.values())
+        return pd.DataFrame(records).set_index('id')
 
 class ToucheImageDataset(Dataset):
     

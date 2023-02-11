@@ -7,8 +7,11 @@ from boilerpy3.marker import AnotherBoilerPipeHTMLParser
 from html.parser import HTMLParser
 from bs4 import BeautifulSoup
 
+#import nltk
+#nltk.download('punkt')
+
 import logging
-logging.basicConfig(level=logging.ERROR)
+logging.getLogger('boilerpy3').setLevel(level=logging.ERROR)
 
 class MyBoilerPipeHTMLParser(BoilerpipeHTMLParser):
     

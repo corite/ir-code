@@ -1,5 +1,5 @@
 from IPython.display import display, HTML
-from neville.ui import render_template
+from ui import render_template
 
 def image_results(image_results, hide=True):
     return display(HTML(render_template('image_results.html', image_results=image_results, hide=hide)))

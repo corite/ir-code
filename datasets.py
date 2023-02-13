@@ -11,7 +11,7 @@ import pandas as pd
 from pyterrier.datasets import Dataset as PTDataset
 from tqdm import tqdm
 import json
-from neville.text_extractor import extract_content
+from text_extractor import extract_content
 
 logger = logging.getLogger(__name__)
 

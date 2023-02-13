@@ -7,8 +7,13 @@ from pyterrier import Transformer
 import pandas as pd
 import pyterrier as pt
 import logging
+import os
 
 logger = logging.getLogger(__name__)
+
+model = CLIPModel.from_pretrained('openai/clip-vit-base-patch32')
+processor = CLIPProcessor.from_pretrained('openai/clip-vit-base-patch32')
+tokenizer = CLIPTokenizer.from_pretrained('openai/clip-vit-base-patch32')
 
 class PyTerrierImageIndex:
     
@@ -41,14 +46,13 @@ class ClipImageIndex:
         self.index = np.empty((len(images), 512))
         with torch.no_grad():
             logger.info('Building CLIP index...')
-            model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
-            processor = CLIPProcessor.from_pretrained("openai/clip-vit-base-patch32")
             for image in tqdm(images):
                 inputs = processor(images=np.array(image), return_tensors="pt")
                 image_features = model.get_image_features(**inputs)
                 features = image_features.numpy()[0]
                 features = features / np.linalg.norm(features)
                 self.index[image.id] = features
+        os.makedirs(os.path.dirname(self.index_file), exist_ok=True)
         np.save(self.index_file, self.index)
                 
 class ClipImageSearch:
@@ -56,8 +60,8 @@ class ClipImageSearch:
     def __init__(self, image_dataset, image_index):
         self.images = image_dataset
         self.tree = BallTree(image_index.index)
-        self.model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
-        self.tokenizer = CLIPTokenizer.from_pretrained("openai/clip-vit-base-patch32")
+        self.model = model
+        self.tokenizer = tokenizer
         
     def text2vec(self, text):
         with torch.no_grad():

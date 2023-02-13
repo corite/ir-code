@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # execute in tira with: 
-# DEBATER_TOKEN=<the-token> TIRA_INPUT_DIRECTORY=$inputDataset TIRA_OUTPUT_DIRECTORY=$outputDir main.py 
+# DEBATER_TOKEN=<the-token> TIRA_INPUT_DIRECTORY=$inputDataset TIRA_OUTPUT_DIRECTORY=$outputDir ./main.py 
 
 import os
 import pyterrier as pt

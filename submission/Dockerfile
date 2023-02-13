@@ -14,7 +14,8 @@ ENV PYTHONPATH=/workspace/
 
 RUN pip install imageio mistletoe boilerpy3 debater-python-api ftfy spacy transformers datasets nltk
 
-COPY ./tira_utils.py ./datasets.py ./ui/visuals.py ./index.py ./debater_stance.py ./text_extractor.py /workspace/
+COPY ./tira_utils.py ./datasets.py ./index.py ./debater_stance.py ./text_extractor.py /workspace/
+COPY ./ui/visuals.py /workspace/ui/
 COPY ./submission/main.py /workspace/
 
 RUN chmod +x /workspace/main.py

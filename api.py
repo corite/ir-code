@@ -1,6 +1,5 @@
 import requests
 from dataclasses import dataclass
-from functools import cached_property
 
 class ArgsMe:
     
@@ -70,7 +69,7 @@ class Argument:
     text: str
     is_pro: bool
                     
-    @cached_property
+    @property
     def is_con(self):
         return not self.is_pro
 

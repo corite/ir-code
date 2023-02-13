@@ -18,7 +18,5 @@ jobs:
       - name: Build and push submission
         uses: docker/build-push-action@v3
         with:
-          context: .
-          file: ./submission/Dockerfile
           push: true
           tags: registry.webis.de/code-research/tira/tira-user-touche23-neville-longbottom/submission:latest

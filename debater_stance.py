@@ -1,5 +1,5 @@
 from debater_python_api.api.debater_api import DebaterApi
-from neville.stance_detector import StanceDetector
+from stance_detector import StanceDetector
 import pandas as pd
 import shelve
 

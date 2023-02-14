@@ -1,5 +1,5 @@
 FROM pytorch/pytorch:1.13.0-cuda11.6-cudnn8-runtime
-# modified base image to get python3.10 instead of python3.7
+# modified base image to get python3.9.12 instead of python3.7
 ENV PYTERRIER_VERSION='5.7'
 ENV PYTERRIER_HELPER_VERSION='0.0.7'
 

@@ -29,7 +29,7 @@ class PyTerrierImageIndex:
             return
         logger.info('Building PyTerrier index...')
         iter_indexer = pt.IterDictIndexer(self.index_dir, overwrite=rebuild, meta={'docno': 25, 'image_id': 10, 'text': 4096})
-        self.index = iter_indexer.index(corpus_iter)
+        self.index = pt.IndexFactory.of(iter_indexer.index(corpus_iter))
         
 class ClipImageIndex:
     

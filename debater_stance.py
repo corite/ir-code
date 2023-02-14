@@ -3,12 +3,16 @@ from neville.stance import StanceDetector
 import nltk
 import pandas as pd
 import shelve
+import logging
+
+logger = logging.getLogger(__name__)
 
 class DebaterStanceDetector(StanceDetector):
     
-    def __init__(self, index, images, api_token, sentences=None, cache_file='/tmp/debater-cache'):
+    def __init__(self, index, images, api_token, aggfunc='mean', sentences=None, cache_file='/tmp/debater-cache'):
         super().__init__(index, images)
         self.api = DebaterApi(api_token)
+        self.aggfunc = aggfunc
         self.sentences = sentences
         self.cache_file = cache_file
 
@@ -19,7 +23,12 @@ class DebaterStanceDetector(StanceDetector):
         pro_con_client = self.api.get_pro_con_client()
         pro_con_client.set_show_process(False)
         sentence_topic_dicts = [{'sentence': sentence, 'topic': query } for stance, query, docno, sentence in stance_query_docno_sentences]
-        return pro_con_client.run(sentence_topic_dicts)
+        try:
+            results = pro_con_client.run(sentence_topic_dicts)
+            return results
+        except ConnectionError:
+            logger.error('Connection to debater failed, returning empty results')
+            return []
     
     def score(self, stance_query_docno_text: ((str, str, str, str))) -> pd.DataFrame:
         stance_query_docno_sentences = ((stance, query, docno, sentence) for stance, query, docno, text in stance_query_docno_text for sentence in nltk.sent_tokenize(text)[:self.sentences])
@@ -41,5 +50,8 @@ class DebaterStanceDetector(StanceDetector):
                 stance_query_docno_score.append((stance, query, docno, score))
 
             df = pd.DataFrame(stance_query_docno_score, columns=['stance', 'query', 'docno', 'score'])
-            df['score'] = df['score'].where(df['stance'] == 'PRO', -df['score']) + 1
-            return df.groupby(['stance', 'query', 'docno']).mean()
+            if df.empty:
+                return df.set_index(['stance', 'query', 'docno'])
+            else:
+                df['score'] = df['score'].where(df['stance'] == 'PRO', -df['score']) + 1
+                return df.groupby(['stance', 'query', 'docno']).agg(self.aggfunc, numeric_only=True)

@@ -7,6 +7,11 @@ def image_results(image_results, hide=True):
 def pt_results(images, pt_results):
     return image_results([images[image_id] for image_id in pt_results['docno']])
 
+def pt_pro_con(images, pt_pro, pt_con, doubles=False):
+    res_pro = [images[image_id] for image_id in pt_pro['docno']]
+    res_con = [images[image_id] for image_id in pt_con['docno']]
+    return two_col(res_pro, res_con, ran=slice(50), doubles=doubles)
+
 def pro_con(pro, con, hide=True, doubles=False):
     return two_col(pro, con, hide=hide, doubles=doubles)
 

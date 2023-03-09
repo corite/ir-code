@@ -29,10 +29,13 @@ class ToucheDataset(PTDataset):
         if not self.qrels_file:
             raise Exception('No qrels passed in constructor')
         variant = variant.upper()
-        if variant not in ['PRO', 'CON']:
+        if variant not in ['PRO', 'CON', 'LABLED']:
             raise Exception('Please specify if PRO or CON documents should be labeled relevant by passing the respective variant argument')
         qrels_touche = pd.read_csv(self.qrels_file, sep='\s+', names=['qid', 'stance', 'docno', 'label'], dtype={'qid': str, 'label': int})
-        return qrels_touche[qrels_touche['stance'] == variant].drop(columns=['stance'])
+        if variant != 'LABLED':
+            return qrels_touche[qrels_touche['stance'] == variant].drop(columns=['stance'])
+        else:
+            return qrels_touche.drop(columns='stance').assign(label=1)
 
     def get_corpus_iter(self, verbose=True):
         iterator = ({

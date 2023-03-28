@@ -171,6 +171,7 @@ class Page:
     
     def __init__(self, page_dir):
         self.page_dir = page_dir
+        self.screenshot = join(self.page_dir, 'snapshot', 'screenshot.png')
         
     @property
     def url(self):
@@ -194,3 +195,8 @@ class Page:
     def snapshot_cleaned(self):
         with open(join(self.page_dir, 'snapshot', 'text.txt'), 'r') as f:
             return f.read()
+
+    def nodes(self):
+        with open(join(self.page_dir, 'snapshot', 'nodes.jsonl')) as f:
+            for line in f.readlines():
+                yield json.loads(line)

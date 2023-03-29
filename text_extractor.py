@@ -1,11 +1,11 @@
-from urllib.parse import urlparse
-import os.path
 import nltk
-from boilerpy3.extractors import ArticleExtractor, ArticleSentencesExtractor
+from boilerpy3.extractors import DefaultExtractor
 from boilerpy3.parser import BoilerpipeHTMLParser
-from boilerpy3.marker import AnotherBoilerPipeHTMLParser
+from boilerpy3.marker import AnotherBoilerPipeHTMLParser, HTMLBoilerpipeMarker
 from html.parser import HTMLParser
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
+from itertools import cycle, islice
+import re
 
 nltk.download('punkt')
 
@@ -19,55 +19,109 @@ class MyBoilerPipeHTMLParser(BoilerpipeHTMLParser):
         
 AnotherBoilerPipeHTMLParser.__bases__ = (MyBoilerPipeHTMLParser,)
 
-article_extractor = ArticleSentencesExtractor(raise_on_failure=False)
-extractor = ArticleExtractor(raise_on_failure=False)
+class MyExtractor(DefaultExtractor):
 
-def extract_filename(url):
-    return os.path.basename(urlparse(url).path)
-                
+    def get_marked_html(self, text):
+        doc = self.get_doc(text)
+        marker = HTMLBoilerpipeMarker(raise_on_failure=self.raise_on_failure)
+        marker.TA_IGNORABLE_ELEMENTS = set()
+        marker.VOID_ELEMENTS = set()
+        return marker.process(doc, text)
+
+extractor = MyExtractor(raise_on_failure=False)
+
 def to_sentences(text):
-    return filter(lambda sentence: len(sentence) > 30, nltk.sent_tokenize(' '.join(text.splitlines())))
+    return filter(lambda sentence: len(sentence) > 20, nltk.sent_tokenize(' '.join(text.splitlines())))
+
+def get_content(tag):
+    return tag.get_text()
                 
-def extract_page_content(snapshot):      
-    article = article_extractor.get_doc(snapshot)
-    if article.title:
-        yield from to_sentences(article.title.split('|')[0])
-    if article.content:
-        yield from to_sentences(article.content)
-    
-def extract_starting_at_tags(tags):
-    processed = set()
-    to_process = set(tags)
-    while to_process:
-        to_process_next = []
-        for tag in to_process:
-            for el in tag.find_all(attrs={'x-boilerpipe-marker': True}):
-                if el not in processed:
-                    processed.add(el)
-                    yield from to_sentences(str(el.string))
-            if tag.parent:
-                to_process_next.append(tag.parent)
-        to_process = set(to_process_next)
+def walk_down_in_tag(tag):
+    if type(tag) is not Tag:
+        return
+    if tag.has_attr('x-boilerpipe-marker'):
+        yield tag
+    else:
+        for child in tag.children:
+            yield from walk_down_in_tag(child)
+        
+def walk_up_starting_at_tag(tag):
+    while type(tag) is not BeautifulSoup:
+        yield from roundrobin(
+            tag.find_previous_siblings(attrs={'x-boilerpipe-marker': True}),
+            tag.find_next_siblings(attrs={'x-boilerpipe-marker': True}))
+        tag = tag.parent
+        
+def get_marked_tags(tag):
+    return tag.find_all(attrs={'x-boilerpipe-marker': True})
                 
 def extract_content(image):
-    snapshot = image.page.snapshot
-    if not all(['HEAD' in xpath for xpath in image.page.xpath]):
-        filename = extract_filename(image.url)
-        marked_html = extractor.get_marked_html(snapshot)
-        marked_soup = BeautifulSoup(marked_html, 'lxml')
-        marked_occurences = marked_soup.find_all(lambda element: any(filename in attr for attr in element.attrs.values()))
-        
-        if len(marked_occurences) == 0:
-            yield from extract_page_content(snapshot)
-            return
-        
-        imgs = list(filter(lambda element: element.name == 'img', marked_occurences))
-        if len(imgs) != 0:
-            for img in imgs:
-                if img.has_attr('alt'):
-                    yield from to_sentences(img['alt'])
-            marked_occurences = imgs
-            
-        yield from extract_starting_at_tags(marked_occurences)
+    img_tags = list(find_image_tags(image))
+    print('=====================================')
+    for i in img_tags:
+        print(get_xpath(i))
+    print('=====================================')
+    if img_tags:
+        for img in img_tags:
+            if img.has_attr('alt'):
+                yield from to_sentences(img['alt'])
+        # TODO: find main img tag
+        start_tag = img_tags[0]
+        for tag in walk_up_starting_at_tag(start_tag):
+            for text in map(get_content, walk_down_in_tag(tag)):
+                yield from to_sentences(text)
     else:
-        yield from extract_page_content(snapshot)
+        yield from to_sentences(extractor.get_content(image.page.snapshot))
+        
+def get_marked_soup(image):
+    snapshot = image.page.snapshot
+    marked_html = extractor.get_marked_html(snapshot)
+    marked_soup = BeautifulSoup(marked_html, 'lxml')
+    return marked_soup
+
+def find_image_tags(image):
+    soup = get_marked_soup(image)
+    for occurence in image.page.xpath:
+        yield find_node(soup, occurence)
+    
+def get_xpath_node(node):
+    length = len(list(node.find_previous_siblings(node.name))) + 1
+    return f'{node.name.upper()}[{length}]'
+
+def get_xpath(node):
+    path = [get_xpath_node(node)]
+    for parent in node.parents:
+        if type(parent) is BeautifulSoup:
+            break
+        path.insert(0, get_xpath_node(parent))
+    return '/' + '/'.join(path)
+
+def find_node(soup, xpath):
+    node = soup
+    element_regex = r'(.+)\[(\d+)\]'
+    try:
+        for element in xpath.split('/')[1:]:
+            matches = re.match(element_regex, element)
+            element_name = matches.group(1).lower()
+            if element_name == 'noscript' and not node.find_all(element_name, recursive=False, limit=int(matches.group(2))):
+                continue
+            while node.contents[0].name == 'source':
+                node.contents[0].unwrap()
+            node = node.find_all(element_name, recursive=False, limit=int(matches.group(2)))[-1]
+    except Exception as e:
+        return None
+    return node
+
+
+def roundrobin(*iterables):
+    "roundrobin('ABC', 'D', 'EF') --> A D E B F C"
+    # Recipe credited to George Sakkis
+    pending = len(iterables)
+    nexts = cycle(iter(it).__next__ for it in iterables)
+    while pending:
+        try:
+            for next in nexts:
+                yield next()
+        except StopIteration:
+            pending -= 1
+            nexts = cycle(islice(nexts, pending))

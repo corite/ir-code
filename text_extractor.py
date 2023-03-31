@@ -3,7 +3,7 @@ from boilerpy3.extractors import DefaultExtractor
 from boilerpy3.parser import BoilerpipeHTMLParser
 from boilerpy3.marker import AnotherBoilerPipeHTMLParser, HTMLBoilerpipeMarker
 from html.parser import HTMLParser
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup, Tag, NavigableString
 from itertools import cycle, islice
 import re
 
@@ -33,45 +33,35 @@ extractor = MyExtractor(raise_on_failure=False)
 def to_sentences(text):
     return filter(lambda sentence: len(sentence) > 20, nltk.sent_tokenize(' '.join(text.splitlines())))
 
-def get_content(tag):
-    return tag.get_text()
-                
-def walk_down_in_tag(tag):
-    if type(tag) is not Tag:
-        return
-    if tag.has_attr('x-boilerpipe-marker'):
-        yield tag
-    else:
-        for child in tag.children:
-            yield from walk_down_in_tag(child)
-        
-def walk_up_starting_at_tag(tag):
-    while type(tag) is not BeautifulSoup:
-        yield from roundrobin(
-            tag.find_previous_siblings(attrs={'x-boilerpipe-marker': True}),
-            tag.find_next_siblings(attrs={'x-boilerpipe-marker': True}))
-        tag = tag.parent
+def get_marked_and_images_ordered(soup, image_xpaths):
+    ordered_lists = []
+    current_list = []
+    for tag in soup.descendants:
+        if type(tag) is NavigableString and tag.parent.has_attr('x-boilerpipe-marker'):
+            current_list.append(tag.parent)
+        if type(tag) is Tag and get_xpath(tag) in image_xpaths and current_list:
+            # insert image
+            current_list.append(tag)
+            if not ordered_lists:
+                # first picture found
+                ordered_lists.append(list(reversed(current_list)))
+            else:
+                # between two pictures
+                ordered_lists.append(current_list[:len(current_list)//2])
+                ordered_lists.append(list(reversed(current_list[len(current_list)//2:])))
+            current_list = []
+    ordered_lists.append(current_list)
+    yield from roundrobin(*ordered_lists)
         
 def get_marked_tags(tag):
     return tag.find_all(attrs={'x-boilerpipe-marker': True})
                 
 def extract_content(image):
-    img_tags = list(find_image_tags(image))
-    print('=====================================')
-    for i in img_tags:
-        print(get_xpath(i))
-    print('=====================================')
-    if img_tags:
-        for img in img_tags:
-            if img.has_attr('alt'):
-                yield from to_sentences(img['alt'])
-        # TODO: find main img tag
-        start_tag = img_tags[0]
-        for tag in walk_up_starting_at_tag(start_tag):
-            for text in map(get_content, walk_down_in_tag(tag)):
-                yield from to_sentences(text)
-    else:
-        yield from to_sentences(extractor.get_content(image.page.snapshot))
+    for tag in get_marked_and_images_ordered(get_marked_soup(image), image.page.xpath):
+        if tag.name == 'img' and tag.has_attr('alt'):
+            yield from to_sentences(tag['alt'])
+        if tag.string:
+            yield from to_sentences(tag.string)
         
 def get_marked_soup(image):
     snapshot = image.page.snapshot

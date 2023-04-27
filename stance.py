@@ -21,3 +21,9 @@ def apply_stance(stance):
     if stance not in ['PRO', 'CON']:
         raise ValueError('Stance can only be PRO or CON')
     return pt.apply.generic(lambda df: df.assign(stance=stance))
+
+def flip_stance():
+    def flip_stance_rows(df):
+        df['stance'] = df.apply(lambda row: 'PRO' if row['stance'] == 'CON' else 'CON', axis=1)
+        return df
+    return pt.apply.generic(flip_stance_rows)

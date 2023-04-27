@@ -86,7 +86,8 @@ class ClipImageSearch:
     
 class ClipRetrieve(Transformer):
     
-    def __init__(self, clip_index, images, num_results):
+    def __init__(self, pt_index, clip_index, images, num_results):
+        self.pt_index = pt_index
         self.clip_search = ClipImageSearch(images, clip_index)
         self.num_results = num_results
         
@@ -97,6 +98,7 @@ class ClipRetrieve(Transformer):
             retrieval_results += [(qid, image.name, image.dist) for image in img_res]
         
         results = pd.DataFrame(retrieval_results, columns=['qid', 'docno', 'score'])
+        results['docid'] = results.apply(lambda row: self.pt_index.getMetaIndex().getDocument('docno', row['docno']), axis=1)
         results['rank'] = results.sort_values(by='score').groupby('qid').cumcount()
         
         return pd.merge(queries, results, on='qid')

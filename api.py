@@ -1,4 +1,5 @@
 import requests
+import json
 from dataclasses import dataclass
 
 class ArgsMe:
@@ -63,6 +64,21 @@ class CachedChatGPT:
                 text=arg['text'],
                 is_pro=arg['is_pro']))
         return ArgumentList(arguments)
+
+class LocalCachedChatGPT:
+
+    def __init__(self, path):
+        self.path = path
+
+    def by_topic(self, topic_id):
+        with open(self.path, 'r') as f:
+            data = json.load(f)
+            arguments = []
+            for arg in data[str(topic_id)]:
+                arguments.append(Argument(
+                    text=arg['text'],
+                    is_pro=arg['is_pro']))
+            return ArgumentList(arguments)
     
 @dataclass
 class Argument:

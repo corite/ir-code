@@ -1,16 +1,18 @@
 import pandas as pd
 import pyterrier as pt
+from pyterrier.apply_base import ApplyDocumentScoringTransformer
 
-class StanceDetector():
+class StanceDetector(ApplyDocumentScoringTransformer):
     
     def __init__(self, index, images):
+        super().__init__(self.transform_fn, batch_size=1000)
         self.index = index
         self.images = images
         
     def score(self, stance_query_docno_text: ((str, str, str, str))) -> pd.DataFrame:
         pass
     
-    def __call__(self, doc_rows):
+    def transform_fn(self, doc_rows):
         stance_query_docno_text = ((stance, query, docno, self.index.getMetaIndex().getItem('text', self.index.getMetaIndex().getDocument('docno', docno))) for stance, query, docno in zip(doc_rows['stance'], doc_rows['query'], doc_rows['docno']))
         # important: make sure index of doc_rows is preserved, otherwise returned results can't be matched
         result = doc_rows.drop(columns=['score'], errors='ignore').join(self.score(stance_query_docno_text), on=['stance', 'query', 'docno'])

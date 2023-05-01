@@ -70,13 +70,13 @@ class LocalCachedChatGPT:
     def __init__(self, path):
         self.path = path
 
-    def by_topic(self, topic_id):
+    def by_topic(self, topic_id, field='text'):
         with open(self.path, 'r') as f:
             data = json.load(f)
             arguments = []
             for arg in data[str(topic_id)]:
                 arguments.append(Argument(
-                    text=arg['text'],
+                    text=arg[field],
                     is_pro=arg['is_pro']))
             return ArgumentList(arguments)
     

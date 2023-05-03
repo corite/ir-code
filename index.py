@@ -95,10 +95,12 @@ class ClipRetrieve(Transformer):
         retrieval_results = []
         for qid, query in zip(queries['qid'], queries['query']):
             img_res = self.clip_search.query(query, results=self.num_results)
-            retrieval_results += [(qid, image.name, image.dist) for image in img_res]
+            retrieval_results += [(qid, query, image.name, image.dist) for image in img_res]
         
-        results = pd.DataFrame(retrieval_results, columns=['qid', 'docno', 'score'])
+        results = pd.DataFrame(retrieval_results, columns=['qid', 'query', 'docno', 'score'])
+        # use minimum distance if the same document is found twice
+        results['score'] = results.groupby(['qid', 'query', 'docno']).transform('min')
         results['docid'] = results.apply(lambda row: self.pt_index.getMetaIndex().getDocument('docno', row['docno']), axis=1)
         results['rank'] = results.sort_values(by='score').groupby('qid').cumcount()
         
-        return pd.merge(queries, results, on='qid')
+        return pd.merge(queries, results, on=['qid', 'query'])

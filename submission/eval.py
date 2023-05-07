@@ -4,6 +4,7 @@
 # PIPELINE_NAME=bm25_chatgpt_args.diff DEBATER_TOKEN=<the-token> EXT_INPUT_FILE=$inputRun/run.txt TIRA_INPUT_DIRECTORY=$inputDataset TIRA_OUTPUT_DIRECTORY=$outputDir ./main.py
 
 import os
+import pyterrier as pt
 import pandas as pd
 from tira_utils import get_input_directory_and_output_directory, normalize_run
 from pathlib import Path
@@ -31,32 +32,46 @@ if __name__ == '__main__':
     EXT_INPUT_FILE = os.environ.get('EXT_INPUT_FILE')
     PIPELINE_NAME = os.environ.get('PIPELINE_NAME')
 
-    DEBATER_CACHE = '/tmp/debater-cache'
-    CHATGPT_ARGUMENTS = '/tmp/chatgpt-arguments.json'
+    DEBATER_CACHE = '/cache/debater-cache.savestate'
+    CHATGPT_ARGUMENTS = '/cache/chatgpt-arguments.json'
 
 
     if os.path.exists(EXT_INPUT_FILE):
         bundle_data.unpack(EXT_INPUT_FILE, CHATGPT_ARGUMENTS, DEBATER_CACHE)
 
     input_directory, output_directory = get_input_directory_and_output_directory(default_input=None)
-    dataset = ToucheDataset(topics_file=os.path.join(input_directory, 'queries.jsonl'), corpus_dir=os.path.join(input_directory, 'images'))
+    dataset = ToucheDataset(topics_file=os.path.join(input_directory, 'topics-task3.xml'), corpus_dir=os.path.join(input_directory, 'images'))
     pipelines = get_pipelines(dataset, PYTERRIER_INDEX, CLIP_INDEX, DEBATER_CACHE, CHATGPT_ARGUMENTS, DEBATER_TOKEN)
 
-    def find_pipeline(pipeline_path):
-        keys = pipeline_path.split('.')
-        pipeline = pipelines
-        for key in keys:
-            pipeline = pipeline[key]
-        return pipeline
+    topics = dataset.get_topics()
+    def evaluate(eval_topics, pipelines, names, perquery=False):
+        return pd.concat([
+            pt.Experiment(
+                list(map(lambda model: apply_stance(stance) >> pt.rewrite.tokenise() >> model, pipelines)),
+                eval_topics,
+                dataset.get_qrels(variant=stance),
+                eval_metrics=['P_10', 'recall_10', 'num_rel', 'num_ret'],
+                names=list(map(lambda name: name + '_' + stance.lower(), names)),
+                perquery=perquery,
+                filter_by_qrels=False,
+                filter_by_topics=False,
+            ) for stance in ['PRO', 'CON']])
 
-    pipeline = find_pipeline(PIPELINE_NAME)
-    run = eval_queries(apply_stance('PRO') >> pipeline, apply_stance('CON') >> pipeline, dataset.get_topics())
+    my_pipelines = []
+    my_pipeline_names = []
+    for name1 in pipelines.keys():
+        for name2 in pipelines[name1].keys():
+            my_pipelines.append(pipelines[name1][name2])
+            my_pipeline_names.append(name1 + '.' + name2)
+
+
+    #eval_topics = topics[topics['qid'].isin(['51'])]
+    print(evaluate(topics,
+        my_pipelines,
+        my_pipeline_names))
 
     if not os.path.exists(EXT_INPUT_FILE):
         bundle_data.pack(EXT_INPUT_FILE, CHATGPT_ARGUMENTS, DEBATER_CACHE)
-
-    # export resuts
-    Path(output_directory).mkdir(parents=True, exist_ok=True)
-    normalize_run(run, SYSTEM_NAME).to_csv(output_directory + '/run.txt', sep=' ', header=False, index=False)
+        print('packed bundle file')
 
     print('Done')

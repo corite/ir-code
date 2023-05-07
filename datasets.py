@@ -27,7 +27,8 @@ class ToucheDataset(PTDataset):
     
     def get_qrels(self, variant):
         if not self.qrels_file:
-            raise Exception('No qrels passed in constructor')
+            print('No qrels passed in constructor, returning empty DataFrame')
+            return pd.DataFrame(columns=['qid', 'stance', 'docno', 'label'])
         variant = variant.upper()
         if variant not in ['PRO', 'CON', 'LABLED']:
             raise Exception('Please specify if PRO or CON documents should be labeled relevant by passing the respective variant argument')

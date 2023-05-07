@@ -65,7 +65,7 @@ class ClipImageSearch:
         
     def text2vec(self, text):
         with torch.no_grad():
-            inputs = self.tokenizer([text], padding=True, return_tensors="pt")
+            inputs = self.tokenizer([text], padding=True, truncation=True, return_tensors="pt")
             text_features = self.model.get_text_features(**inputs)
             t_features = text_features.numpy()
             return t_features / np.linalg.norm(t_features)

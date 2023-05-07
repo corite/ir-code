@@ -1,11 +1,12 @@
 import json
-import shelve
+import savestate
+from pathlib import Path
 
 def pack(output, chatgpt, debater):
     out_data = {}
     with open(chatgpt, 'r') as chatgpt_f:
         out_data['chatgpt'] = json.load(chatgpt_f)
-    with shelve.open(debater) as debater_f:
+    with savestate.open(Path(debater), 'r') as debater_f:
         out_data['debater'] = {}
         for key in debater_f:
             out_data['debater'][key] = debater_f[key]
@@ -17,6 +18,6 @@ def unpack(input_file, chatgpt, debater):
         data = json.load(input_f)
     with open(chatgpt, 'w') as chatgpt_f:
         json.dump(data['chatgpt'], chatgpt_f)
-    with shelve.open(debater) as debater_f:
+    with savestate.open(Path(debater), 'c') as debater_f:
         for key in data['debater']:
             debater_f[key] = data['debater'][key]

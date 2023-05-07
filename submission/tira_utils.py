@@ -12,7 +12,7 @@ def ensure_pyterrier_is_loaded():
     
     if not pt.started():
         print(f'Start PyTerrier with version={pt_version}, helper_version={pt_helper_version}, no_download=True')
-        pt.init(version=pt_version, helper_version=pt_helper_version, no_download=True)
+        pt.init(version=pt_version, helper_version=pt_helper_version, no_download=True, boot_packages=['com.github.terrierteam:terrier-prf:-SNAPSHOT'])
 
 
 def get_input_directory_and_output_directory(default_input):
@@ -42,7 +42,7 @@ def normalize_run(run, system_name, depth=1000):
 
     # Make sure that rank position starts by 1
     run["rank"] = 1
-    run["rank"] = run.groupby("qid")["rank"].cumsum()
+    run["rank"] = run.groupby(["qid", "Q0"])["rank"].cumsum().astype(int)
     
     return run[['qid', 'Q0', 'docno', 'rank', 'score', 'system']]
 

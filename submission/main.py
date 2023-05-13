@@ -37,6 +37,8 @@ if __name__ == '__main__':
 
     if os.path.exists(EXT_INPUT_FILE):
         bundle_data.unpack(EXT_INPUT_FILE, CHATGPT_ARGUMENTS, DEBATER_CACHE)
+    else:
+        print('Didn\'t find bundle file, not extracting.')
 
     input_directory, output_directory = get_input_directory_and_output_directory(default_input=None)
     dataset = ToucheDataset(topics_file=os.path.join(input_directory, 'queries.jsonl'), corpus_dir=os.path.join(input_directory, 'images'))
@@ -54,6 +56,8 @@ if __name__ == '__main__':
 
     if not os.path.exists(EXT_INPUT_FILE):
         bundle_data.pack(EXT_INPUT_FILE, CHATGPT_ARGUMENTS, DEBATER_CACHE)
+    else:
+        print('Bundle file already exists, not packing bundle.')
 
     # export resuts
     Path(output_directory).mkdir(parents=True, exist_ok=True)

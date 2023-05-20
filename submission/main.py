@@ -23,15 +23,15 @@ def eval_queries(pipeline_pro, pipeline_con, queries, head=10):
 
 if __name__ == '__main__':
 
-    SYSTEM_NAME = os.environ.get('TIRA_SYSTEM_NAME' ,'neville-longbottom-run0')
     PYTERRIER_INDEX = '/cache/pyterrier-index'
     CLIP_INDEX = '/cache/clip-index.npy'
 
     DEBATER_TOKEN = os.environ.get('DEBATER_TOKEN')
     EXT_INPUT_FILE = os.environ.get('EXT_INPUT_FILE')
     PIPELINE_NAME = os.environ.get('PIPELINE_NAME')
+    SYSTEM_NAME = os.environ.get('TIRA_SYSTEM_NAME', PIPELINE_NAME)
 
-    DEBATER_CACHE = '/tmp/debater-cache'
+    DEBATER_CACHE = '/tmp/debater.savestate'
     CHATGPT_ARGUMENTS = '/tmp/chatgpt-arguments.json'
 
 
@@ -61,6 +61,7 @@ if __name__ == '__main__':
 
     # export resuts
     Path(output_directory).mkdir(parents=True, exist_ok=True)
-    normalize_run(run, SYSTEM_NAME).to_csv(output_directory + '/run.txt', sep=' ', header=False, index=False)
+    #normalize_run(run, SYSTEM_NAME).to_csv(output_directory + f'/run-neville-{PIPELINE_NAME}.txt', sep=' ', header=False, index=False)
+    normalize_run(run, SYSTEM_NAME).to_csv(output_directory + 'run.txt', sep=' ', header=False, index=False)
 
     print('Done')

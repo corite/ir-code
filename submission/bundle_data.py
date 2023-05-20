@@ -12,6 +12,7 @@ def pack(output, chatgpt, debater):
             out_data['debater'][key] = debater_f[key]
     with open(output, 'w') as output_f:
         json.dump(out_data, output_f)
+    print(f'Packed data from {chatgpt} and {debater} to {output}')
 
 def unpack(input_file, chatgpt, debater):
     with open(input_file, 'r') as input_f:
@@ -21,3 +22,4 @@ def unpack(input_file, chatgpt, debater):
     with savestate.open(Path(debater), 'c') as debater_f:
         for key in data['debater']:
             debater_f[key] = data['debater'][key]
+    print(f'Unpacked data to {chatgpt} and {debater} from {input_file}')

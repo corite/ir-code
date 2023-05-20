@@ -40,6 +40,7 @@ def get_pipelines(dataset, pt_index_path, clip_index_path, debater_cache_path, c
         return text
 
     def query_expand_multiple(query_row, field):
+        query_row['query_0'] = query_row.loc[:, 'query']
         qid = query_row['qid'].iloc[0]
         stance = query_row['stance'].iloc[0]
         arguments = filter(lambda argument: argument.is_pro == (stance == 'PRO'), chatgpt_args.by_topic(int(qid), field=field))
@@ -53,6 +54,10 @@ def get_pipelines(dataset, pt_index_path, clip_index_path, debater_cache_path, c
     bm25 = pt.BatchRetrieve(pt_index.index, wmodel='BM25') % 500
     clip = ClipRetrieve(pt_index.index, clip_index, dataset.images, 100) % 500
 
+    def print_df(df):
+        print(df)
+        return df
+
     # query expand
     bm25_chatgpt_args = (pt.apply.query(query_expand_arguments_chatgpt) >> bm25 >> pt.rewrite.reset())
     clip_chatgpt_args = (pt.apply.by_query(partial(query_expand_multiple, field='text'), add_ranks=False) >> clip >> pt.rewrite.reset())
@@ -64,7 +69,7 @@ def get_pipelines(dataset, pt_index_path, clip_index_path, debater_cache_path, c
         my_diff = pt.rewrite.tokenise() >> query_expansion_pipeline + diff_scalar
 
         rm3 = pt.rewrite.RM3(pt_index.index, fb_terms=10, fb_docs=3)
-        my_rm3 = pt.rewrite.tokenise() >> query_expansion_pipeline >> pt.rewrite.tokenise() >> rm3 >> pt.apply.query(remove_rm3_nan) >> bm25
+        my_rm3 = pt.rewrite.tokenise() >> query_expansion_pipeline >> pt.apply.generic(print_df) >> pt.rewrite.tokenise() >> rm3 >> pt.apply.generic(print_df) >> pt.apply.query(remove_rm3_nan) >> pt.apply.generic(print_df) >>  bm25
 
         my_debater = pt.rewrite.tokenise() >> query_expansion_pipeline >> debater
 

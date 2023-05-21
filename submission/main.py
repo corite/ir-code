@@ -62,6 +62,6 @@ if __name__ == '__main__':
     # export resuts
     Path(output_directory).mkdir(parents=True, exist_ok=True)
     #normalize_run(run, SYSTEM_NAME).to_csv(output_directory + f'/run-neville-{PIPELINE_NAME}.txt', sep=' ', header=False, index=False)
-    normalize_run(run, SYSTEM_NAME).to_csv(output_directory + 'run.txt', sep=' ', header=False, index=False)
+    normalize_run(run, SYSTEM_NAME).to_csv(output_directory + '/run.txt', sep=' ', header=False, index=False)
 
     print('Done')
